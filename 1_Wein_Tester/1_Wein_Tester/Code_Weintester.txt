@@ -1,0 +1,113 @@
+#include <SoftwareSerial.h>
+#include "WiFly.h"
+#define SSID "Frank"    //HIER WLAN NAMEN EINTRAGEN
+#define KEY "12345678"     //HIER WLAN PASSWORT EINTRAGEN
+#define AUTH WIFLY_AUTH_WPA2_PSK
+int flag = 0;
+int red = 0;
+
+int green = 0;
+
+int blue = 0;
+// Pins' connection
+// Arduino WiFly
+// 2 <----> TX
+// 3 <----> RX
+SoftwareSerial wiflyUart(2, 3); // create a WiFi shield serial object
+WiFly wifly(&wiflyUart); // pass the wifi shield serial object to the WiFly class
+
+void setup() {
+  pinMode(11, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  pinMode(A0, INPUT);
+ wiflyUart.begin(9600); // start wifi shield uart port
+ Serial.begin(9600); // start the arduino serial port
+ delay(1000); // wait for initialization of wifly
+ wifly.reset(); // reset the shield
+ delay(1000);
+ //set WiFly params
+ wifly.sendCommand("set ip protp 18"); // set the local comm port to 80
+ delay(100);
+ wifly.sendCommand("set ip local 80\r"); // set the local comm port to 80
+ delay(100);
+ wifly.sendCommand("set comm remote 0\r"); // do not send a default string when a connection opens
+ delay(100);
+ wifly.sendCommand("set comm open *OPEN*\r"); // set the string to open connection
+ delay(100);
+ wifly.join(SSID, KEY, AUTH);
+ delay(5000);
+ wifly.sendCommand("get ip\r");
+ char c;
+ while (wifly.receive((uint8_t *)&c, 1, 300) > 0) { // print the response from the get ip command
+ Serial.print((char)c);
+ }
+}
+
+void loop() {
+  analogWrite(11, 255);
+  analogWrite(12, 0);
+  analogWrite(13, 0);
+  delay(500); // Wait for 1000 millisecond(s)
+  red = analogRead(A0);
+  delay(500); // Wait for 1000 millisecond(s)
+  analogWrite(11, 0);
+  analogWrite(12, 0);
+  analogWrite(13, 0);
+  delay(500); // Wait for 1000 millisecond(s)
+  analogWrite(11, 0);
+  analogWrite(12, 255);
+  analogWrite(13, 0);
+  delay(500); // Wait for 1000 millisecond(s)
+  green = analogRead(A0);
+  delay(500); // Wait for 1000 millisecond(s)
+  analogWrite(11, 0);
+  analogWrite(12, 0);
+  analogWrite(13, 0);
+  delay(500); // Wait for 1000 millisecond(s)
+  analogWrite(11, 0);
+  analogWrite(12, 0);
+  analogWrite(13, 255);
+  delay(500); // Wait for 1000 millisecond(s)
+  blue = analogRead(A0);
+  delay(500); // Wait for 1000 millisecond(s)
+  analogWrite(11, 0);
+  analogWrite(12, 0);
+  analogWrite(13, 0);
+  delay(500); // Wait for 1000 millisecond(s)
+  red=red*0.24;
+  green=green*0.24;
+  blue=blue*0.24;
+ if(wifly.available()) { // the wifi shield has data available
+ if(wiflyUart.find("*OPEN*")) { // see if the data available by looking for the *OPEN* string
+ Serial.println("New Browser Request!");
+ delay(1000); // delay enough time for the browser to complete sending its HTTP request string
+ // send HTTP header
+ wiflyUart.println("HTTP/1.1 200 OK");
+ wiflyUart.println("Content-Type: text/html; charset=UTF-8");
+ wiflyUart.println("Content-Length: 250"); // length of HTML code appr. 24 + content
+ wiflyUart.println("Connection: close");
+ wiflyUart.println();
+ // send webpage's HTML code
+ wiflyUart.print("<html>"); //6
+ wiflyUart.print("<head><style> .farbiges-rechteck { width: 200px;  height: 100px; background-color: rgb(");
+ wiflyUart.print(red);
+ wiflyUart.print(",");
+ wiflyUart.print(green);
+ wiflyUart.print(",");
+ wiflyUart.print(blue);
+ wiflyUart.println("); }</style></head>"); //6
+ wiflyUart.print("<body>"); //6
+ wiflyUart.print("<h1>Weintester!</h1>"); // length 20
+ wiflyUart.print("red");//3
+  wiflyUart.println(red);//3
+  wiflyUart.print("green");//5
+  wiflyUart.println(green);//3
+  wiflyUart.print("blue");//4
+  wiflyUart.println(blue);//3
+  wiflyUart.print("<div class=\"farbiges-rechteck\"></div>");
+ wiflyUart.print("</body>"); //7
+ wiflyUart.print("</html>"); //7
+ }
+ }
+}
