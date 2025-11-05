@@ -1,6 +1,6 @@
 #include <SoftwareSerial.h>
 #include "WiFly.h"
-#define SSID "Frank"    //HIER WLAN NAMEN EINTRAGEN
+#define SSID "judi"    //HIER WLAN NAMEN EINTRAGEN
 #define KEY "12345678"     //HIER WLAN PASSWORT EINTRAGEN
 #define AUTH WIFLY_AUTH_WPA2_PSK
 int flag = 0;
